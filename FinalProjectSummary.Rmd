@@ -1,6 +1,6 @@
 ---
 title: "Final Project Summary"
-author: "Lyn Brush"
+author: "Lyn Brush, Huu Phuoc Tran"
 date: "2026-04-16"
 output: html_document
 ---
@@ -22,6 +22,12 @@ Link: https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset?res
 Project idea / research questions:\
 > I'm planning to investigate the averages for columns like "acousticness" and "speechiness" by genre, as well as popular keys, bpms, and the most common duration. I also want to see how these things affect the popularity score.\
 > I will likely use a lot of histograms and box plots to see averages, and scatterplots to see trendlines.
+```{r}
+
+```
+
+> I am planning to analyze whether Spotify audio features can help explain or predict a song’s genre. I chose this idea because different genres may have different sound patterns, such as energy, danceability, tempo, acousticness, and valence. I will use plots like boxplots, histograms, and scatterplots to compare these features across genres, then possibly use a classification model to see which features are most related to genre differences.
+
 ```{r}
 
 ```

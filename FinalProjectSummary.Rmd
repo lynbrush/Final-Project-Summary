@@ -7,10 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
 ```
 
 Research Topic: Spotify Song Statistics\
-Team Members: Lyn (Kalyna) Brush\
+Team Members: Lyn (Kalyna) Brush, Huu Phuoc Tran\
 \
 Data Description:\
 > From website: This is a dataset of Spotify tracks over a range of 125 different genres. Each track has some audio features associated with it. The data is in CSV format which is tabular and can be loaded quickly.\
@@ -19,15 +21,175 @@ Data Description:\
 Link: https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset?resource=download \
 \
 
-Project idea / research questions:\
-> I'm planning to investigate the averages for columns like "acousticness" and "speechiness" by genre, as well as popular keys, bpms, and the most common duration. I also want to see how these things affect the popularity score.\
-> I will likely use a lot of histograms and box plots to see averages, and scatterplots to see trendlines.
 ```{r}
+# -----------------------------
+# 1. Load the dataset
+# -----------------------------
 
+spotify_raw <- read_csv("data/dataset.csv", show_col_types = FALSE)
+
+glimpse(spotify_raw)
+summary(spotify_raw)
 ```
 
-> I am planning to analyze whether Spotify audio features can help explain or predict a song’s genre. I chose this idea because different genres may have different sound patterns, such as energy, danceability, tempo, acousticness, and valence. I will use plots like boxplots, histograms, and scatterplots to compare these features across genres, then possibly use a classification model to see which features are most related to genre differences.
+```{r}
+# -----------------------------
+# 2. Clean the dataset
+# -----------------------------
 
+spotify_clean <- spotify_raw %>%
+  select(-any_of(c("...1", "X", "X1", "Unnamed: 0"))) %>%
+  distinct() %>%
+  drop_na(
+    track_genre,
+    danceability,
+    energy,
+    tempo,
+    acousticness,
+    valence,
+    speechiness,
+    loudness,
+    instrumentalness,
+    liveness,
+    duration_ms
+  ) %>%
+  mutate(
+    duration_min = duration_ms / 60000,
+    track_genre = as.factor(track_genre),
+    explicit = as.factor(explicit),
+    key = as.factor(key),
+    mode = as.factor(mode),
+    time_signature = as.factor(time_signature)
+  )
+
+glimpse(spotify_clean)
+```
+
+Project idea / research questions:\
+
+> I am planning to analyze whether How do mood-related Spotify audio features differ across selected music genres? I chose this question because different genres may create different emotional feelings for listeners. For example, some genres may sound more energetic, danceable, positive, or fast-paced than others. In this project, I focus on mood-related audio features such as valence, energy, danceability, and tempo. Instead of training a prediction model, I use exploratory data analysis and visualizations to compare how these mood features vary across genres.
+
+```{r}
+# -----------------------------
+# 3. Choose selected genres
+# -----------------------------
+
+genres_to_use <- c(
+  "pop", "rock", "hip-hop", "jazz", "classical",
+  "country", "metal", "acoustic", "dance", "edm"
+)
+
+spotify_focus <- spotify_clean %>%
+  filter(track_genre %in% genres_to_use) %>%
+  mutate(track_genre = fct_drop(track_genre))
+
+spotify_focus %>%
+  count(track_genre, sort = TRUE)
+```
+
+I selected 10 genres from the full Spotify dataset because the original dataset has many genre categories. Using a smaller group makes the analysis easier to visualize and compare. The selected genres have similar sample sizes, with most genres having around 900 to 1,000 songs, so the comparison is fairly balanced.
+
+```{r}
+# ============================================================
+# 4. Plot number of songs by genre
+# ============================================================
+
+spotify_focus %>%
+  count(track_genre, sort = TRUE) %>%
+  ggplot(aes(x = reorder(track_genre, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Number of Songs by Selected Genre",
+    x = "Genre",
+    y = "Number of Songs"
+  ) +
+  theme_minimal()
+```
+
+This bar chart shows the number of songs in each selected genre. Most genres have close to 1,000 songs, while a few genres such as classical and dance have slightly fewer songs. Overall, the selected genres are fairly balanced, which makes the comparison between genres more reliable and easier to interpret.
+
+
+```{r}
+# ============================================================
+# 5. Mood feature distributions by genre
+# ============================================================
+
+mood_features <- c("valence", "energy", "danceability", "tempo")
+
+spotify_mood_long <- spotify_focus %>%
+  select(track_genre, all_of(mood_features)) %>%
+  pivot_longer(
+    cols = all_of(mood_features),
+    names_to = "mood_feature",
+    values_to = "value"
+  )
+
+ggplot(spotify_mood_long, aes(x = track_genre, y = value)) +
+  geom_boxplot(outlier.alpha = 0.2) +
+  facet_wrap(~ mood_feature, scales = "free_y") +
+  coord_flip() +
+  labs(
+    title = "Mood-Related Audio Features by Genre",
+    x = "Genre",
+    y = "Feature Value"
+  ) +
+  theme_minimal()
+```
+This set of boxplots compares four mood-related audio features across selected genres: danceability, energy, tempo, and valence. Danceability shows how suitable a song is for dancing, energy shows how intense the song feels, tempo shows the song speed in BPM, and valence shows how positive or cheerful the song sounds. The chart helps show that different genres have different mood patterns, although many genres still overlap.
+
+```{r}
+# ============================================================
+# 6. Energy vs Valence
+# ============================================================
+
+ggplot(
+  spotify_focus,
+  aes(x = valence, y = energy, color = track_genre)
+) +
+  geom_point(alpha = 0.35) +
+  labs(
+    title = "Energy vs. Valence by Genre",
+    x = "Valence / Musical Positivity",
+    y = "Energy",
+    color = "Genre"
+  ) +
+  theme_minimal()
+```
+This scatterplot compares energy and valence for songs in different genres. Songs near the top of the chart have higher energy, while songs farther to the right have higher musical positivity. The plot shows that many songs overlap across genres, meaning that energy and valence alone cannot perfectly separate genres. However, it still helps identify general mood patterns, such as which genres tend to be more energetic or more positive.
+```{r}
+# ============================================================
+# 7. Simple mood categories
+# ============================================================
+
+spotify_mood_category <- spotify_focus %>%
+  mutate(
+    mood_category = case_when(
+      energy >= median(energy, na.rm = TRUE) & valence >= median(valence, na.rm = TRUE) ~ "High Energy / Positive",
+      energy >= median(energy, na.rm = TRUE) & valence < median(valence, na.rm = TRUE) ~ "High Energy / Less Positive",
+      energy < median(energy, na.rm = TRUE) & valence >= median(valence, na.rm = TRUE) ~ "Low Energy / Positive",
+      TRUE ~ "Low Energy / Less Positive"
+    )
+  )
+
+spotify_mood_category %>%
+  count(track_genre, mood_category) %>%
+  ggplot(aes(x = track_genre, y = n, fill = mood_category)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  labs(
+    title = "Mood Category Distribution by Genre",
+    x = "Genre",
+    y = "Proportion of Songs",
+    fill = "Mood Category"
+  ) +
+  theme_minimal()
+```
+This stacked bar chart groups songs into four simple mood categories based on energy and valence: High Energy / Positive, High Energy / Less Positive, Low Energy / Positive, and Low Energy / Less Positive. Each bar shows the proportion of songs in each mood category for a genre. This chart makes it easier to compare the overall mood profile of each genre. For example, some genres have a larger share of high-energy songs, while others have more low-energy or less-positive songs.
+
+
+> I'm planning to investigate the averages for columns like "acousticness" and "speechiness" by genre, as well as popular keys, bpms, and the most common duration. I also want to see how these things affect the popularity score.\
+> I will likely use a lot of histograms and box plots to see averages, and scatterplots to see trendlines.
 ```{r}
 
 ```

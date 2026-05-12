@@ -12,7 +12,7 @@ The goal of this project is to explore the Spotify Tracks dataset. Analysis of t
 We will explore the following research questions:
 
 1.  How do the descriptive columns (time_signature, tempo, etc) affect the popularity of a track?
-2.  What is the average tempo and key for each genre?
+2.  What is the average of all of the other descriptive variables for each genre?
 3.  How do mood-related Spotify audio features differ across selected music genres?
 
 ## Data
@@ -71,11 +71,13 @@ Thankfully, the data was already sufficiently cleaned, so we didn't need to do a
 ## Results
 
 #### Loading the Dataset
-```{r, echo=FALSE}
+```{r}
 
 library(readr)
 library(tidyverse)
 library(dplyr)
+library(knitr)
+library(kableExtra)
 dataset <- read_csv('~/Final/data/dataset.csv')
 
 ```
@@ -225,4 +227,102 @@ The correlation coefficient is 0.05, which is the highest of all the correlation
 
 ##### Conclusion
 
-Overall, most of the descriptive variables seemed to have very little effect on the popularity of the song. While there were some slight trends, popularity is likely far more dependant on the popularity of the artist and the percieved quality of the song, both things that are not tracked within this dataset.
+Overall, most of the descriptive variables seemed to have very little effect on the popularity of the song. While there were some slight trends, popularity is likely far more dependant on the popularity of the artist and the perceived quality of the song, both things that are not tracked within this dataset.
+
+#### What is the average of all of the other descriptive variables for each genre?
+
+```{r}
+
+genres <- c(
+  "acoustic",
+  "country",
+  "rock",
+  "jazz",
+  "metal",
+  "edm",
+  "pop",
+  "hip-hop",
+  "dance",
+  "classical"
+)
+
+get_mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+genre_summary <- dataset %>%
+  filter(track_genre %in% genres, key != -1) %>%
+  group_by(track_genre) %>%
+  summarise(
+    Tempo = round(mean(tempo, na.rm = TRUE), 1),
+
+    Loudness = round(mean(loudness, na.rm = TRUE), 2),
+
+    Popularity = round(mean(popularity, na.rm = TRUE), 1),
+
+    `Explicit (%)` = round(mean(explicit, na.rm = TRUE) * 100, 1),
+
+    `Duration (min)` = round(mean(duration_ms, na.rm = TRUE) / 60000, 2),
+
+    Mode = ifelse(
+      get_mode(mode) == 1,
+      "Major",
+      "Minor"
+    ),
+
+    `Time Sig.` = paste0(get_mode(time_signature), "/4"),
+
+    Key = recode(
+      as.character(get_mode(key)),
+      "0" = "C",
+      "1" = "C#/Db",
+      "2" = "D",
+      "3" = "D#/Eb",
+      "4" = "E",
+      "5" = "F",
+      "6" = "F#/Gb",
+      "7" = "G",
+      "8" = "G#/Ab",
+      "9" = "A",
+      "10" = "A#/Bb",
+      "11" = "B"
+    ),
+
+    .groups = "drop"
+  )
+
+genre_summary %>%
+  kable(
+    caption = "Summary Statistics by Genre",
+    align = "c"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c(
+      "striped",
+      "hover",
+      "condensed",
+      "responsive"
+    ),
+    full_width = FALSE
+  )
+```
+
+In order to calculate the average descriptive variables of each genre, we have to assemble a list of diverse genres that somewhat represent the full list of 125. Then, we can create a table to view the averages for each of the descriptive variables.
+
+- Tempo: The genre with the highest tempo on average is rock at 126.3, and the lowest is classical at 107.9.
+- Loudness: The loudest genre on average is EDM with -5.28 decibels, and the quietest by far is classical at -20.15
+- Popularity: The most popular genre is (predictably) pop, with an average score of 47.6. The least popular is classical, with an average of 13.1.
+- Explicit (%): The genre with the highest percentage of explicit content is hip-hop at 31.9%, and the lowest percentage is classical at 0%. Now I'm not saying that someone should make a classical song with swear words, but I am saying that there's an untapped market there.
+- Duration (min): The genre with the longest average duration in minutes is metal at 4.27, and the shortest genre is jazz at 3.17.
+- Mode: The most common mode across all genres is Major.
+- Time Signature: The most common time signature across all genres listed here is 4/4.
+- Key: C#/Db is the most common key for dance, hip-hop, and jazz music. C is the most common key for acoustic and rock music. G is the most common key for classical and country music. B is the most common key for EDM, D is the most common for metal, and F is the most common for pop.
+
+####  How do mood-related Spotify audio features differ across selected music genres?
+
+Here is where you can do your part of the report, Phuoc. If you could write a short conclusion since I did the introduction and data explanation, that would be great.
+
+Also, I know in the presentation you only had one research question, but we were supposed to have 2. I didn't say anything earlier because I thought you weren't finished with your part of the presentation, and by the time I realized you were, it was way too late. 
+
+Thank you! Please delete this note before you finish (obviously lol)

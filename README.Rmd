@@ -11,7 +11,7 @@ The goal of this project is to explore the Spotify Tracks dataset. Analysis of t
 
 We will explore the following research questions:
 
-1.  How do certain columns (time_signature, tempo, etc) affect the popularity?
+1.  How do the descriptive columns (time_signature, tempo, etc) affect the popularity of a track?
 2.  What is the average tempo and key for each genre?
 3.  How do mood-related Spotify audio features differ across selected music genres?
 
@@ -19,7 +19,81 @@ We will explore the following research questions:
 
 This dataset is from Kaggle, linked here: (<https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset>). It contains data on 114 thousand songs over 125 different genres. The data is directly downloadable in the csv format. Here is each column and its purpose:
 
-### Identification Columns
+#### Identification Columns
 
--   track_id: An identification code given by Spotify
--   hgi
+-   track_id: An identification code given by Spotify.
+-   artists: The names of the artists who performed the track. If there are multiple, they are separated by a ";".
+-   album_name: The name of the album the track is on.
+-   track_name: The name of the track.
+
+While these columns are helpful for finding specific tracks, we didn't need to use them for our purposes.
+
+#### Descriptive Columns
+
+-   popularity: The popularity of a track between 1-100. This is calculated with an algorithm based on the total number of plays and recency of those plays.
+
+-   duration_ms: The track length in milliseconds.
+
+-   explicit: Boolean value determining whether it has explicit lyrics or not (True = has explicit lyrics).
+
+-   key: The key of the track. Numerical values represent different keys in ascending order (0 = C, 1= C#/Db, etc)
+
+-   loudness: The loudness of a track in decibels.
+
+-   mode: Indicates whether the track is in a major (1) or minor (0) key.
+
+-   tempo: The tempo (speed) of the track in beats per minute.
+
+-   time_signature: The time signature (beats per measure) of the track. The given number is over 4 (so a value of 3 would translate to 3/4).
+
+-   track_genre: The genre of the track.
+
+#### Mood Columns
+
+These columns are on a scale of 0.0 to 1.0, with 1.0 representing a song that represents the column the most. For example, a 0.9 score in danceability would mean the song is very danceable.
+
+-   danceability: How suitable a track is for dancing based on elements such as tempo and rhythm.
+
+-   energy: How energetic a track is based on intensity, speed, and loudness.
+
+-   speechiness: How much spoken word is in the track.
+
+-   acousticness: How acoustic (non-electronic) the track is.
+
+-   instrumentalness: How little vocal content is included.
+
+-   liveness: How confident the data is that this track was recorded live.
+
+-   valence: How positive-sounding the track is.
+
+Thankfully, the data was already sufficiently cleaned, so we didn't need to do any cleaning on our part.
+
+## Results
+
+#### Loading the Dataset
+```{r, echo=FALSE}
+
+library(readr)
+library(tidyverse)
+library(dplyr)
+dataset <- read_csv('~/Final/data/dataset.csv')
+
+```
+
+#### How do the descriptive columns (time_signature, tempo, etc) affect the popularity of a track?
+
+Correlation between Popularity and Duration:
+
+```{r}
+cor(dataset$popularity, dataset$duration_ms, use = "complete.obs")
+
+model <- lm(popularity ~ duration_ms, data = dataset)
+
+plot(dataset$duration_ms, dataset$popularity,
+     xlab = "Duration (ms)",
+     ylab = "Popularity",
+     main = "Popularity vs Duration")
+abline(model, col = "red")
+```
+
+The correlation between the two (-0.007) is basically negligible at such a low number. However, there is a very slight decrease in popularity as songs get longer. This makes sense with the logic of streaming, as longer songs will take longer to stream, and therefore gain streams slower than shorter songs. The graphic supports this, and shows that most songs are clustered around the 3 minute mark, the traditional song length for most genres.

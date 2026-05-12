@@ -2,7 +2,7 @@
 title: "Analysis of Spotify Statistics"
 author: "Lyn Brush, Huu Phuoc Tran"
 date: "2026-05-12"
-output: html_document
+output: github_document
 ---
 
 ## Introduction
@@ -233,6 +233,9 @@ Overall, most of the descriptive variables seemed to have very little effect on 
 
 ```{r}
 
+library(dplyr)
+library(knitr)
+
 genres <- c(
   "acoustic",
   "country",
@@ -292,20 +295,12 @@ genre_summary <- dataset %>%
     .groups = "drop"
   )
 
-genre_summary %>%
-  kable(
-    caption = "Summary Statistics by Genre",
-    align = "c"
-  ) %>%
-  kable_styling(
-    bootstrap_options = c(
-      "striped",
-      "hover",
-      "condensed",
-      "responsive"
-    ),
-    full_width = FALSE
-  )
+knitr::kable(
+  genre_summary,
+  caption = "Summary Statistics by Genre",
+  align = "c",
+  format = "markdown"
+)
 ```
 
 In order to calculate the average descriptive variables of each genre, we have to assemble a list of diverse genres that somewhat represent the full list of 125. Then, we can create a table to view the averages for each of the descriptive variables.

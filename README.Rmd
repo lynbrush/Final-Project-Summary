@@ -82,7 +82,7 @@ dataset <- read_csv('~/Final/data/dataset.csv')
 
 #### How do the descriptive columns (time_signature, tempo, etc) affect the popularity of a track?
 
-Correlation between Popularity and Duration:
+##### Correlation between Popularity and Duration:
 
 ```{r}
 cor(dataset$popularity, dataset$duration_ms, use = "complete.obs")
@@ -97,3 +97,132 @@ abline(model, col = "red")
 ```
 
 The correlation between the two (-0.007) is basically negligible at such a low number. However, there is a very slight decrease in popularity as songs get longer. This makes sense with the logic of streaming, as longer songs will take longer to stream, and therefore gain streams slower than shorter songs. The graphic supports this, and shows that most songs are clustered around the 3 minute mark, the traditional song length for most genres.
+
+##### Correlation between Popularity and Explicitness
+
+```{r}
+cor(dataset$popularity, ifelse(dataset$explicit, 1, 0), use = "complete.obs")
+
+tapply(dataset$popularity, dataset$explicit, mean, na.rm = TRUE)
+
+
+boxplot(popularity ~ explicit, data = dataset,
+        xlab = "Explicit",
+        ylab = "Popularity",
+        col = c("lightpink", "lavender"),
+        main = "Popularity by Explicit Content")
+
+t.test(popularity ~ explicit, data = dataset)
+```
+With a correlation coefficient of 0.044, explicitness is slightly more relevant to popularity, although it is still not a good indicator. The average popularity score for a non-explicit song is 32.93, and for an explicit song, it's 36.45. The above boxplot shows the discrepancy between the two; if a song is explicit, it is slightly more likely to have a higher popularity.
+
+##### Correlation between Popularity and Key
+
+```{r}
+
+dataset$key <- as.factor(dataset$key)
+
+tapply(dataset$popularity, dataset$key, mean, na.rm = TRUE)
+
+boxplot(popularity ~ key, data = dataset,
+        xlab = "Musical Key",
+        ylab = "Popularity",
+        col = c("lightpink", "plum", "thistle", "lavender", "lightsteelblue2","lightskyblue1"),
+        main = "Popularity by Key")
+
+```
+
+While key is displayed using numbers, it's actually a categorical variable. Because of this, a traditional correlation coefficient can't be found. Instead, we found the average popularity of each of the 12 keys to determine the most and least popular keys. The most popular is 4, which corresponds to the key of E, with an average popularity score of 34.64; this is followed closely by 2 (D), with a score of 34.37. The least popular key is 10, which corresponds to A#/Bb, and has an average popularity score of 32.46.
+
+##### Correlation between Popularity and Time Signature
+
+```{r}
+dataset$time_signature <- as.factor(dataset$time_signature)
+
+tapply(dataset$popularity, dataset$time_signature, mean, na.rm = TRUE)
+
+boxplot(popularity ~ time_signature, data = dataset,
+        xlab = "Time Signature",
+        ylab = "Popularity",
+        col = c("lightpink", "plum", "thistle", "lavender", "lightsteelblue2"),
+        main = "Popularity by Time Signature")
+```
+
+Time signature must be treated like a categorical variable, just like key. According to the boxplot, the most popular time signature is 0/4, with a popularity score of 36.97. It also has the most outliers. This is because 0/4 isn't really a time signature, and these tracks aren't songs. One track with 0/4 time signature, "Weißes Rauschen: Schlafmittel", is a white noise track. The most popular actual time signature is 4/4, with a score of 33.67. This makes sense, since 4/4 is by far the most used time signature across most genres.
+
+##### Correlation between Popularity and Tempo
+
+```{r}
+
+cor(dataset$popularity[dataset$tempo != 0],
+    dataset$tempo[dataset$tempo != 0],
+    use = "complete.obs")
+
+
+plot(dataset$tempo[dataset$tempo != 0], dataset$popularity[dataset$tempo != 0],
+     xlab = "Tempo (BPM)",
+     ylab = "Popularity",
+     main = "Popularity vs Tempo")
+
+abline(
+  lm(popularity ~ tempo, data = dataset),
+  col = "red"
+)
+
+```
+
+The correlation coefficient between popularity and tempo is 0.014. This is indicates a very small positive correlation, As tempo increases, popularity increases very slightly. This makes sense logically, as people often enjoy upbeat and up-tempo songs that make them feel good.
+
+##### Correlation between Popularity and Mode
+
+```{r}
+
+cor(dataset$popularity, dataset$mode, use = "complete.obs")
+
+dataset$mode_label <- factor(
+  dataset$mode,
+  levels = c(0, 1),
+  labels = c("Minor", "Major")
+)
+
+boxplot(
+  popularity ~ mode_label,
+  data = dataset,
+  col = c("lightpink", "lavender"),
+  main = "Popularity by Musical Mode",
+  xlab = "Mode",
+  ylab = "Popularity"
+)
+
+```
+
+The correlation coefficient is -0.013, indicating that there is a very slight negative correlation between mode and popularity. Songs in a major key are slightly less popular overall than songs in a minor key. This is surprising, since the major mode sounds happier, and you'd think people would rather listen to a song with a happier sound. However, making a song in a minor key is more difficult, so it's possible that they tend to have a better production due to being more challenging for less experienced musicians.
+
+##### Correlation between Popularity and Loudness
+
+```{r}
+
+cor(dataset$popularity, dataset$loudness, use = "complete.obs")
+
+plot(
+  dataset$loudness,
+  dataset$popularity,
+  main = "Popularity vs Loudness",
+  xlab = "Loudness",
+  ylab = "Popularity",
+  pch = 19,
+)
+
+abline(
+  lm(popularity ~ loudness, data = dataset),
+  col = "red",
+  lwd = 2
+)
+
+```
+
+The correlation coefficient is 0.05, which is the highest of all the correlations so far. While still a slight correlation, songs tend to be more popular as their loudness increases. According to this article (<https://pmc.ncbi.nlm.nih.gov/articles/PMC5634808/>), music arouses our brain, and loudness intensifies your response to the music. So if you like a song, you're more likely to want it to be louder to add to your experience.
+
+##### Conclusion
+
+Overall, most of the descriptive variables seemed to have very little effect on the popularity of the song. While there were some slight trends, popularity is likely far more dependant on the popularity of the artist and the percieved quality of the song, both things that are not tracked within this dataset.

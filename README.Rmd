@@ -1,0 +1,25 @@
+---
+title: "Analysis of Spotify Statistics"
+author: "Lyn Brush, Huu Phuoc Tran"
+date: "2026-05-12"
+output: html_document
+---
+
+## Introduction
+
+The goal of this project is to explore the Spotify Tracks dataset. Analysis of this topic could potentially be useful to musical artists, labels, and music theorists to determine trends across genres and to find what consumers might want.
+
+We will explore the following research questions:
+
+1.  How do certain columns (time_signature, tempo, etc) affect the popularity?
+2.  What is the average tempo and key for each genre?
+3.  How do mood-related Spotify audio features differ across selected music genres?
+
+## Data
+
+This dataset is from Kaggle, linked here: (<https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset>). It contains data on 114 thousand songs over 125 different genres. The data is directly downloadable in the csv format. Here is each column and its purpose:
+
+### Identification Columns
+
+-   track_id: An identification code given by Spotify
+-   hgi

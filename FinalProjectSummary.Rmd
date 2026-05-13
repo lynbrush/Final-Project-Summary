@@ -115,7 +115,7 @@ This bar chart shows the number of songs in each selected genre. Most genres hav
 # 5. Mood feature distributions by genre
 # ============================================================
 
-mood_features <- c("valence", "energy", "danceability", "tempo")
+mood_features <- c("danceability", "energy", "valence", "tempo")
 
 spotify_mood_long <- spotify_focus %>%
   select(track_genre, all_of(mood_features)) %>%
@@ -125,16 +125,32 @@ spotify_mood_long <- spotify_focus %>%
     values_to = "value"
   )
 
-ggplot(spotify_mood_long, aes(x = track_genre, y = value)) +
-  geom_boxplot(outlier.alpha = 0.2) +
-  facet_wrap(~ mood_feature, scales = "free_y") +
-  coord_flip() +
+ggplot(
+  spotify_mood_long,
+  aes(
+    x = value,
+    y = fct_reorder(track_genre, value, .fun = median)
+  )
+) +
+  geom_boxplot(outlier.alpha = 0.25) +
+  facet_wrap(
+    ~ mood_feature,
+    scales = "free_x",
+    ncol = 2
+  ) +
   labs(
     title = "Mood-Related Audio Features by Genre",
-    x = "Genre",
-    y = "Feature Value"
+    x = "Feature Value",
+    y = "Genre"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+    strip.text = element_text(size = 14, face = "bold"),
+    axis.text.y = element_text(size = 11),
+    axis.text.x = element_text(size = 10),
+    panel.spacing = unit(1.2, "lines")
+  )
 ```
 This set of boxplots compares four mood-related audio features across selected genres: danceability, energy, tempo, and valence. Danceability shows how suitable a song is for dancing, energy shows how intense the song feels, tempo shows the song speed in BPM, and valence shows how positive or cheerful the song sounds. The chart helps show that different genres have different mood patterns, although many genres still overlap.
 
